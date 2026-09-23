@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>הטאבים שלי</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🎸 הטאבים שלי</h1>
+    <p class="subtitle">אוסף קישורים לטאבים ואקורדים שאהבתי</p>
+  </header>
+
+  <main>
+    <section class="add-form">
+      <h2>הוספת טאב</h2>
+      <form id="tab-form">
+        <label for="link-input">קישור לדף הטאב</label>
+        <input type="url" id="link-input" placeholder="https://..." required>
+
+        <div class="row">
+          <div class="field">
+            <label for="song-input">שם השיר</label>
+            <input type="text" id="song-input" placeholder="שם השיר" required>
+          </div>
+          <div class="field">
+            <label for="artist-input">אמן</label>
+            <input type="text" id="artist-input" placeholder="שם האמן" required>
+          </div>
+        </div>
+
+        <button type="submit">הוסף טאב</button>
+        <p id="form-message" class="message"></p>
+      </form>
+    </section>
+
+    <section class="list-section">
+      <div class="list-header">
+        <h2>הטאבים שלי <span id="count-badge"></span></h2>
+        <input type="search" id="search-input" placeholder="חיפוש לפי שם שיר או אמן...">
+      </div>
+      <ul id="tabs-list"></ul>
+      <p id="empty-message" class="empty-message">עדיין לא הוספת טאבים. הדבק קישור למעלה כדי להתחיל.</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
