@@ -1,0 +1,20 @@
+{
+  "name": "מדף הטאבים",
+  "short_name": "טאבים",
+  "description": "אפליקציה לשמירה וניהול קישורים לטאבים וקורדים בגיטרה",
+  "start_url": "/Tabs/index.html",
+  "scope": "/Tabs/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#b85f28",
+  "background_color": "#f6f2ec",
+  "icons": [
+    {
+      "src": "/Tabs/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "productivity"]
+}

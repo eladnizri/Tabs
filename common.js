@@ -263,3 +263,9 @@ document.querySelectorAll("[data-icon]").forEach((el) => {
   el.innerHTML = svgIcon(el.dataset.icon);
 });
 updateNavCount();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/Tabs/sw.js').catch(() => {
+    // Service worker registration failed - app still works
+  });
+}
