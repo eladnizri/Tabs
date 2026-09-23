@@ -2,49 +2,88 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>הטאבים שלי</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f2ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14110f" media="(prefers-color-scheme: dark)">
+<title>הוספת טאב · מדף הטאבים</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>🎸 הטאבים שלי</h1>
-    <p class="subtitle">אוסף קישורים לטאבים ואקורדים שאהבתי</p>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" data-icon="pick"></span>
+        <span class="brand-name">מדף הטאבים</span>
+      </a>
+      <nav class="nav-links" aria-label="ניווט ראשי">
+        <a href="index.html" class="nav-link active" aria-current="page">
+          <span class="icon" data-icon="plus"></span>הוספה
+        </a>
+        <a href="my-tabs.html" class="nav-link">
+          <span class="icon" data-icon="library"></span>הטאבים שלי
+          <span class="nav-count" data-nav-count hidden></span>
+        </a>
+      </nav>
+    </div>
   </header>
 
-  <main>
-    <section class="add-form">
-      <h2>הוספת טאב</h2>
-      <form id="tab-form">
+  <main class="container">
+    <div class="page-header">
+      <h1>הוספת טאב חדש</h1>
+      <p>הדבק קישור לדף טאבים או אקורדים מכל אתר. בקישורים מנגינה שם השיר והאמן יתמלאו לבד.</p>
+    </div>
+
+    <form id="tab-form" class="card form-card" novalidate>
+      <div class="field">
         <label for="link-input">קישור לדף הטאב</label>
-        <input type="url" id="link-input" placeholder="https://..." required>
-
-        <div class="row">
-          <div class="field">
-            <label for="song-input">שם השיר</label>
-            <input type="text" id="song-input" placeholder="שם השיר" required>
-          </div>
-          <div class="field">
-            <label for="artist-input">אמן</label>
-            <input type="text" id="artist-input" placeholder="שם האמן" required>
-          </div>
+        <div class="url-input" dir="ltr">
+          <span class="icon url-icon" data-icon="link"></span>
+          <input id="link-input" type="text" inputmode="url" placeholder="https://negina.co.il/chords/..." autocomplete="off" spellcheck="false">
+          <button type="button" id="paste-btn" class="paste-btn" hidden>
+            <span class="icon" data-icon="clipboard"></span>הדבק
+          </button>
         </div>
-
-        <button type="submit">הוסף טאב</button>
-        <p id="form-message" class="message"></p>
-      </form>
-    </section>
-
-    <section class="list-section">
-      <div class="list-header">
-        <h2>הטאבים שלי <span id="count-badge"></span></h2>
-        <input type="search" id="search-input" placeholder="חיפוש לפי שם שיר או אמן...">
+        <p id="detect-status" class="detect-status" hidden></p>
       </div>
-      <ul id="tabs-list"></ul>
-      <p id="empty-message" class="empty-message">עדיין לא הוספת טאבים. הדבק קישור למעלה כדי להתחיל.</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="song-input">שם השיר</label>
+          <input id="song-input" type="text" placeholder="למשל: מודה אני" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="artist-input">אמן</label>
+          <input id="artist-input" type="text" placeholder="למשל: עומר אדם" autocomplete="off" list="artist-suggestions">
+          <datalist id="artist-suggestions"></datalist>
+        </div>
+      </div>
+
+      <div id="preview" class="preview" hidden>
+        <span class="preview-label">כך זה ייראה בספרייה</span>
+        <div id="preview-slot"></div>
+      </div>
+
+      <p id="form-error" class="form-error" role="alert" hidden></p>
+
+      <button type="submit" class="btn btn-primary btn-lg">
+        <span class="icon" data-icon="plus"></span>הוספה לספרייה
+      </button>
+    </form>
+
+    <section id="recent" class="recent" hidden>
+      <div class="section-head">
+        <h2>נוספו לאחרונה</h2>
+        <a href="my-tabs.html" class="text-link">לכל הטאבים ←</a>
+      </div>
+      <ul id="recent-list" class="tab-list"></ul>
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script src="common.js"></script>
+  <script src="add.js"></script>
 </body>
 </html>
