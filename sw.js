@@ -1,4 +1,4 @@
-const CACHE_NAME = 'guitar-tabs-v2';
+const CACHE_NAME = 'guitar-tabs-v3';
 const ASSETS = [
   '/Tabs/index.html',
   '/Tabs/my-tabs.html',
@@ -7,9 +7,7 @@ const ASSETS = [
   '/Tabs/library.js',
   '/Tabs/style.css',
   '/Tabs/manifest.json',
-  '/Tabs/icon-192.png',
-  '/Tabs/icon-512.png',
-  '/Tabs/icon-maskable.png',
+  '/Tabs/icon.svg',
 ];
 
 self.addEventListener('install', (e) => {

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- Background -->
+  <rect width="192" height="192" fill="#f6f2ec"/>
+
+  <!-- Guitar pick shape -->
+  <g transform="translate(96, 96)">
+    <!-- Pick body -->
+    <path d="M 0,-60 Q 30,-40 30,0 Q 30,30 0,50 Q -30,30 -30,0 Q -30,-40 0,-60" fill="#b85f28"/>
+
+    <!-- Pick point -->
+    <path d="M -15,50 L 0,75 L 15,50 Z" fill="#b85f28"/>
+
+    <!-- String lines -->
+    <g stroke="#f6f2ec" stroke-width="3" opacity="0.8">
+      <line x1="-20" y1="-30" x2="-20" y2="30"/>
+      <line x1="0" y1="-35" x2="0" y2="35"/>
+      <line x1="20" y1="-30" x2="20" y2="30"/>
+    </g>
+  </g>
+</svg>
