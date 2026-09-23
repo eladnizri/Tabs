@@ -16,5 +16,14 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["music", "productivity"]
+  "categories": ["music", "productivity"],
+  "share_target": {
+    "action": "/Tabs/index.html",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

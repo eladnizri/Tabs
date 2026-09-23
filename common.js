@@ -101,6 +101,8 @@ const ICONS = {
   clipboard: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
   music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
   library: '<path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>',
+  star: '<path d="M12 2.5 15 9l7 1-5.2 5 1.3 7L12 18.5 5.9 22l1.3-7L2 10l7-1z"/>',
+  shuffle: '<path d="m18 4 3 3-3 3"/><path d="M2 7h4.5a3 3 0 0 1 2.4 1.2L15 17a3 3 0 0 0 2.4 1.2H21"/><path d="m18 20 3-3-3-3"/><path d="M2 17h4.5a3 3 0 0 0 2.4-1.2L11 12"/>',
 };
 
 function svgIcon(name) {
@@ -163,7 +165,7 @@ function highlight(text, query) {
 }
 
 function tabCard(tab, opts = {}) {
-  const { query = "", compact = false, preview = false, onArtist, onEdit, onDelete } = opts;
+  const { query = "", compact = false, preview = false, onArtist, onEdit, onDelete, onToggleFavorite } = opts;
   const href = parseHttpUrl(tab.link) ? tab.link : null;
   const card = h(preview ? "div" : "li", {
     class: ["tab-card", compact && "compact", preview && "is-preview"].filter(Boolean).join(" "),
@@ -202,6 +204,19 @@ function tabCard(tab, opts = {}) {
             "a",
             { class: "icon-btn", href, target: "_blank", rel: "noopener noreferrer", title: "פתיחת הטאב", "aria-label": `פתיחת ${tab.song}` },
             icon("external")
+          ),
+        onToggleFavorite &&
+          h(
+            "button",
+            {
+              type: "button",
+              class: `icon-btn favorite-btn${tab.favorite ? " active" : ""}`,
+              title: tab.favorite ? "הסרה ממועדפים" : "הוספה למועדפים",
+              "aria-label": tab.favorite ? `הסרת ${tab.song} ממועדפים` : `הוספת ${tab.song} למועדפים`,
+              "aria-pressed": String(!!tab.favorite),
+              onclick: onToggleFavorite,
+            },
+            icon("star")
           ),
         onEdit &&
           h("button", { type: "button", class: "icon-btn", title: "עריכה", "aria-label": `עריכת ${tab.song}`, onclick: onEdit }, icon("edit")),

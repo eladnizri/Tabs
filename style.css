@@ -241,6 +241,12 @@ select {
   gap: 16px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -329,6 +335,14 @@ select {
 .icon-btn.danger:hover {
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+.favorite-btn.active {
+  color: var(--accent);
+}
+
+.favorite-btn.active .icon svg {
+  fill: currentColor;
 }
 
 .text-link {

@@ -7,6 +7,7 @@ const sortSelect = document.getElementById("sort-select");
 const viewButtons = document.querySelectorAll("[data-view]");
 const filterBar = document.getElementById("filter-bar");
 const results = document.getElementById("results");
+const shuffleBtn = document.getElementById("shuffle-btn");
 
 const collator = new Intl.Collator("he", { sensitivity: "base", numeric: true });
 
@@ -48,14 +49,29 @@ function sortTabs(list) {
   const arr = [...list];
   switch (state.sort) {
     case "oldest":
-      return arr.sort(byDate);
+      arr.sort(byDate);
+      break;
     case "song":
-      return arr.sort((a, b) => collator.compare(a.song, b.song));
+      arr.sort((a, b) => collator.compare(a.song, b.song));
+      break;
     case "artist":
-      return arr.sort((a, b) => collator.compare(a.artist, b.artist) || collator.compare(a.song, b.song));
+      arr.sort((a, b) => collator.compare(a.artist, b.artist) || collator.compare(a.song, b.song));
+      break;
     default:
-      return arr.sort((a, b) => byDate(b, a));
+      arr.sort((a, b) => byDate(b, a));
   }
+  // Favorites float to the top, keeping the chosen sort order within each group.
+  arr.sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
+  return arr;
+}
+
+function toggleFavorite(tab) {
+  const tabs = loadTabs();
+  const target = tabs.find((t) => t.id === tab.id);
+  if (!target) return;
+  target.favorite = !target.favorite;
+  saveTabs(tabs);
+  render();
 }
 
 function deleteTab(tab) {
@@ -158,6 +174,7 @@ function cardFor(tab, query, compact) {
     onArtist: setArtist,
     onEdit: () => startEdit(tab),
     onDelete: () => deleteTab(tab),
+    onToggleFavorite: () => toggleFavorite(tab),
   });
 }
 
@@ -246,6 +263,7 @@ function render() {
   sortSelect.value = state.sort;
   viewButtons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === state.view)));
   toolbar.hidden = tabs.length === 0;
+  shuffleBtn.hidden = tabs.length === 0;
 
   if (state.artist && !tabs.some((t) => t.artist === state.artist)) state.artist = "";
   renderFilterBar();
@@ -300,6 +318,27 @@ viewButtons.forEach((btn) =>
     render();
   })
 );
+
+function visibleTabs() {
+  const tabs = loadTabs();
+  const query = state.query.trim().toLowerCase();
+  let list = tabs;
+  if (state.artist) list = list.filter((t) => t.artist === state.artist);
+  if (query) list = list.filter((t) => t.song.toLowerCase().includes(query) || t.artist.toLowerCase().includes(query));
+  return list;
+}
+
+shuffleBtn.addEventListener("click", () => {
+  const list = visibleTabs();
+  if (!list.length) return;
+  const pick = list[Math.floor(Math.random() * list.length)];
+  window.open(pick.link, "_blank", "noopener,noreferrer");
+  showToast(`מנגנים: ${pick.song} · ${pick.artist}`, {
+    actionLabel: "עוד אחד",
+    duration: 6000,
+    onAction: () => shuffleBtn.click(),
+  });
+});
 
 document.addEventListener("keydown", (e) => {
   const typing = e.target.closest("input, textarea, select, [contenteditable]");

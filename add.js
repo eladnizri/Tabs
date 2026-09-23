@@ -174,3 +174,15 @@ window.addEventListener("storage", (e) => {
 });
 
 renderRecent();
+
+// Handle links shared into the app from another app's share sheet (Web Share Target).
+function handleSharedUrl() {
+  const params = new URLSearchParams(location.search);
+  const shared = params.get("url") || (params.get("text") || "").match(/https?:\/\/\S+/)?.[0];
+  if (!shared) return;
+  linkInput.value = prettyUrl(shared);
+  handleLinkChange();
+  history.replaceState(null, "", location.pathname);
+  linkInput.focus();
+}
+handleSharedUrl();

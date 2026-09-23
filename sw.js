@@ -1,4 +1,4 @@
-const CACHE_NAME = 'guitar-tabs-v3';
+const CACHE_NAME = 'guitar-tabs-v4';
 const ASSETS = [
   '/Tabs/index.html',
   '/Tabs/my-tabs.html',
