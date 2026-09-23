@@ -265,7 +265,7 @@ document.querySelectorAll("[data-icon]").forEach((el) => {
 updateNavCount();
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {
+  navigator.serviceWorker.register('/Tabs/sw.js').catch(() => {
     // Service worker registration failed - app still works
   });
 }
