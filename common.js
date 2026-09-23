@@ -1,4 +1,46 @@
 const STORAGE_KEY = "guitar-tabs";
+const PDF_DB_NAME = "guitar-tabs-pdf";
+const PDF_STORE = "files";
+const PDF_KEY = "songbook";
+
+function openPdfDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(PDF_DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(PDF_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function savePdfFile(file) {
+  const db = await openPdfDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PDF_STORE, "readwrite");
+    tx.objectStore(PDF_STORE).put({ blob: file, name: file.name, size: file.size, savedAt: new Date().toISOString() }, PDF_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadPdfFile() {
+  const db = await openPdfDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PDF_STORE, "readonly");
+    const req = tx.objectStore(PDF_STORE).get(PDF_KEY);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deletePdfFile() {
+  const db = await openPdfDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PDF_STORE, "readwrite");
+    tx.objectStore(PDF_STORE).delete(PDF_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
 
 function loadTabs() {
   try {
@@ -189,6 +231,7 @@ function tabCard(tab, opts = {}) {
     );
   }
   if (tab.source) meta.append(h("span", { class: "tab-source" }, icon("globe"), h("bdi", {}, tab.source)));
+  if (!href && tab.page) meta.append(h("span", { class: "tab-source" }, icon("library"), `עמוד ${tab.page} בספר שלך`));
 
   card.append(h("div", { class: "tab-main" }, title, meta));
 
@@ -201,6 +244,13 @@ function tabCard(tab, opts = {}) {
           h(
             "a",
             { class: "icon-btn", href, target: "_blank", rel: "noopener noreferrer", title: "פתיחת הטאב", "aria-label": `פתיחת ${tab.song}` },
+            icon("external")
+          ),
+        !href &&
+          tab.page &&
+          h(
+            "a",
+            { class: "icon-btn", href: `view.html?page=${tab.page}`, title: "צפייה בעמוד", "aria-label": `צפייה ב${tab.song}` },
             icon("external")
           ),
         onEdit &&

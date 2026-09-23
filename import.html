@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f2ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14110f" media="(prefers-color-scheme: dark)">
+<meta name="description" content="ייצוא קישורים לאפליקציה">
+<title>ייצוא קישורים · מדף הטאבים</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .import-container { max-width: 800px; }
+  textarea { width: 100%; min-height: 300px; font-family: monospace; }
+  .import-stats { margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; }
+  .progress-bar { width: 100%; height: 4px; background: var(--bg-tertiary); border-radius: 2px; margin: 1rem 0; overflow: hidden; }
+  .progress-fill { height: 100%; background: #b85f28; width: 0%; transition: width 0.3s; }
+  .status-item { display: flex; align-items: center; gap: 0.5rem; font-size: 14px; margin: 0.5rem 0; }
+  .status-icon { width: 20px; text-align: center; }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" data-icon="pick"></span>
+        <span class="brand-name">מדף הטאבים</span>
+      </a>
+      <nav class="nav-links" aria-label="ניווט ראשי">
+        <a href="index.html" class="nav-link">
+          <span class="icon" data-icon="plus"></span>הוספה
+        </a>
+        <a href="import.html" class="nav-link active" aria-current="page">
+          <span class="icon" data-icon="clipboard"></span>ייצוא
+        </a>
+        <a href="songbook.html" class="nav-link">
+          <span class="icon" data-icon="music"></span>ספר שירים
+        </a>
+        <a href="my-tabs.html" class="nav-link">
+          <span class="icon" data-icon="library"></span>הטאבים שלי
+          <span class="nav-count" data-nav-count hidden></span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container import-container">
+    <div class="page-header">
+      <h1>ייצוא קישורים בעלויות</h1>
+      <p>הדבק כמה קישורים שתרצה (אחד בכל שורה), או קובץ JSON של רשימת שירים עם מספרי עמוד מהספר שלך - ונוסיף את כולם בבת אחת.</p>
+    </div>
+
+    <form id="import-form" class="card form-card" novalidate>
+      <div class="field">
+        <label for="urls-input">קישורים, או JSON של שירים</label>
+        <textarea id="urls-input" placeholder="https://negina.co.il/chords/...&#10;https://negina.co.il/chords/...&#10;&#10;או הדבק כאן JSON: [{&quot;song&quot;:...,&quot;artist&quot;:...,&quot;page&quot;:...}]" spellcheck="false"></textarea>
+      </div>
+
+      <div id="status-area" hidden>
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <div id="status-list" class="import-stats"></div>
+      </div>
+
+      <p id="import-error" class="form-error" role="alert" hidden></p>
+
+      <button type="submit" class="btn btn-primary btn-lg">
+        <span class="icon" data-icon="plus"></span>ייצוא
+      </button>
+    </form>
+  </main>
+
+  <script src="common.js"></script>
+  <script>
+const form = document.getElementById('import-form');
+const urlsInput = document.getElementById('urls-input');
+const statusArea = document.getElementById('status-area');
+const statusList = document.getElementById('status-list');
+const progressFill = document.getElementById('progress-fill');
+const importError = document.getElementById('import-error');
+
+function showError(msg) {
+  importError.textContent = msg;
+  importError.hidden = false;
+}
+
+function clearError() {
+  importError.hidden = true;
+}
+
+function statusRow(iconText, text) {
+  return h('div', { class: 'status-item' }, h('span', { class: 'status-icon' }, iconText), h('span', {}, text));
+}
+
+function importFromJson(entries) {
+  statusArea.hidden = false;
+  statusList.replaceChildren();
+  progressFill.style.width = '0%';
+
+  const tabs = loadTabs();
+  let added = 0, duplicates = 0, invalid = 0;
+
+  entries.forEach((entry, i) => {
+    progressFill.style.width = ((i + 1) / entries.length * 100) + '%';
+
+    const song = (entry.song || '').trim();
+    const artist = (entry.artist || '').trim();
+    const page = Number(entry.page) || null;
+
+    if (!song || !artist) {
+      statusList.append(statusRow('✗', 'חסר שם שיר/אמן'));
+      invalid++;
+      return;
+    }
+
+    if (tabs.some((t) => t.song === song && t.artist === artist)) {
+      statusList.append(statusRow('⊙', `${song} · ${artist} - כבר קיים`));
+      duplicates++;
+      return;
+    }
+
+    tabs.unshift({
+      id: newId(),
+      song,
+      artist,
+      page,
+      chords: Array.isArray(entry.chords) ? entry.chords : undefined,
+      addedAt: new Date().toISOString(),
+    });
+    statusList.append(statusRow('✓', `${song} · ${artist}${page ? ` (עמוד ${page})` : ''}`));
+    added++;
+  });
+
+  finishImport(tabs, added, duplicates, invalid);
+}
+
+function importFromUrls(urls) {
+  statusArea.hidden = false;
+  statusList.replaceChildren();
+  progressFill.style.width = '0%';
+
+  const tabs = loadTabs();
+  let added = 0, duplicates = 0, invalid = 0;
+
+  urls.forEach((url, i) => {
+    progressFill.style.width = ((i + 1) / urls.length * 100) + '%';
+
+    const link = canonicalUrl(normalizeUrl(url));
+    if (!link) {
+      statusList.append(statusRow('✗', 'קישור לא תקין'));
+      invalid++;
+      return;
+    }
+
+    if (tabs.some((t) => canonicalUrl(t.link) === link)) {
+      statusList.append(statusRow('⊙', 'כבר קיים'));
+      duplicates++;
+      return;
+    }
+
+    const detected = autoDetect(link);
+    if (detected && detected.song && detected.artist) {
+      tabs.unshift({
+        id: newId(),
+        song: detected.song,
+        artist: detected.artist,
+        link,
+        source: sourceLabel(link),
+        addedAt: new Date().toISOString(),
+      });
+      statusList.append(statusRow('✓', `${detected.song} · ${detected.artist}`));
+      added++;
+    } else {
+      statusList.append(statusRow('?', 'לא זוהה אוטומטית (הוסף ידנית בדף ההוספה)'));
+    }
+  });
+
+  finishImport(tabs, added, duplicates, invalid);
+}
+
+function finishImport(tabs, added, duplicates, invalid) {
+  if (added > 0) {
+    saveTabs(tabs);
+    statusList.append(
+      h(
+        'div',
+        { class: 'import-stats' },
+        h('strong', {}, 'הסיכום:'),
+        h('br'),
+        `✓ נוספו: ${added}`,
+        h('br'),
+        `⊙ כבר קיימים: ${duplicates}`,
+        h('br'),
+        `✗ לא זוהו/לא תקינים: ${invalid}`
+      )
+    );
+
+    showToast(`נוספו ${added} טאבים בהצלחה`, {
+      type: 'success',
+      actionLabel: 'לספרייה',
+      onAction: () => (location.href = 'my-tabs.html'),
+    });
+  } else {
+    showError('לא נוסף אף טאב חדש (כולם כבר קיימים, לא תקינים, או לא זוהו).');
+  }
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  clearError();
+
+  const raw = urlsInput.value.trim();
+  if (!raw) return showError('הדבק לפחות קישור אחד, או JSON של רשימת שירים');
+
+  if (raw.startsWith('[')) {
+    let entries;
+    try {
+      entries = JSON.parse(raw);
+    } catch (err) {
+      return showError('ה-JSON לא תקין: ' + err.message);
+    }
+    if (!Array.isArray(entries) || !entries.length) return showError('ה-JSON צריך להיות מערך של שירים');
+    return importFromJson(entries);
+  }
+
+  const urls = raw.split('\n').map((u) => u.trim()).filter(Boolean);
+  importFromUrls(urls);
+});
+  </script>
+</body>
+</html>
