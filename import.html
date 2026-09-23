@@ -36,6 +36,9 @@
         <a href="import.html" class="nav-link active" aria-current="page">
           <span class="icon" data-icon="clipboard"></span>ייצוא
         </a>
+        <a href="songbook.html" class="nav-link">
+          <span class="icon" data-icon="music"></span>ספר שירים
+        </a>
         <a href="my-tabs.html" class="nav-link">
           <span class="icon" data-icon="library"></span>הטאבים שלי
           <span class="nav-count" data-nav-count hidden></span>
@@ -47,13 +50,13 @@
   <main class="container import-container">
     <div class="page-header">
       <h1>ייצוא קישורים בעלויות</h1>
-      <p>הדבק כמה קישורים שתרצה (אחד בכל שורה) ונוסיף את כולם בבת אחת.</p>
+      <p>הדבק כמה קישורים שתרצה (אחד בכל שורה), או קובץ JSON של רשימת שירים עם מספרי עמוד מהספר שלך - ונוסיף את כולם בבת אחת.</p>
     </div>
 
     <form id="import-form" class="card form-card" novalidate>
       <div class="field">
-        <label for="urls-input">קישורים</label>
-        <textarea id="urls-input" placeholder="https://negina.co.il/chords/...&#10;https://negina.co.il/chords/..." spellcheck="false"></textarea>
+        <label for="urls-input">קישורים, או JSON של שירים</label>
+        <textarea id="urls-input" placeholder="https://negina.co.il/chords/...&#10;https://negina.co.il/chords/...&#10;&#10;או הדבק כאן JSON: [{&quot;song&quot;:...,&quot;artist&quot;:...,&quot;page&quot;:...}]" spellcheck="false"></textarea>
       </div>
 
       <div id="status-area" hidden>
@@ -93,17 +96,49 @@ function statusRow(iconText, text) {
   return h('div', { class: 'status-item' }, h('span', { class: 'status-icon' }, iconText), h('span', {}, text));
 }
 
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-  clearError();
+function importFromJson(entries) {
+  statusArea.hidden = false;
+  statusList.replaceChildren();
+  progressFill.style.width = '0%';
 
-  const urls = urlsInput.value
-    .split('\n')
-    .map((u) => u.trim())
-    .filter(Boolean);
+  const tabs = loadTabs();
+  let added = 0, duplicates = 0, invalid = 0;
 
-  if (!urls.length) return showError('הדבק לפחות קישור אחד');
+  entries.forEach((entry, i) => {
+    progressFill.style.width = ((i + 1) / entries.length * 100) + '%';
 
+    const song = (entry.song || '').trim();
+    const artist = (entry.artist || '').trim();
+    const page = Number(entry.page) || null;
+
+    if (!song || !artist) {
+      statusList.append(statusRow('✗', 'חסר שם שיר/אמן'));
+      invalid++;
+      return;
+    }
+
+    if (tabs.some((t) => t.song === song && t.artist === artist)) {
+      statusList.append(statusRow('⊙', `${song} · ${artist} - כבר קיים`));
+      duplicates++;
+      return;
+    }
+
+    tabs.unshift({
+      id: newId(),
+      song,
+      artist,
+      page,
+      chords: Array.isArray(entry.chords) ? entry.chords : undefined,
+      addedAt: new Date().toISOString(),
+    });
+    statusList.append(statusRow('✓', `${song} · ${artist}${page ? ` (עמוד ${page})` : ''}`));
+    added++;
+  });
+
+  finishImport(tabs, added, duplicates, invalid);
+}
+
+function importFromUrls(urls) {
   statusArea.hidden = false;
   statusList.replaceChildren();
   progressFill.style.width = '0%';
@@ -144,6 +179,10 @@ form.addEventListener('submit', (e) => {
     }
   });
 
+  finishImport(tabs, added, duplicates, invalid);
+}
+
+function finishImport(tabs, added, duplicates, invalid) {
   if (added > 0) {
     saveTabs(tabs);
     statusList.append(
@@ -168,6 +207,28 @@ form.addEventListener('submit', (e) => {
   } else {
     showError('לא נוסף אף טאב חדש (כולם כבר קיימים, לא תקינים, או לא זוהו).');
   }
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  clearError();
+
+  const raw = urlsInput.value.trim();
+  if (!raw) return showError('הדבק לפחות קישור אחד, או JSON של רשימת שירים');
+
+  if (raw.startsWith('[')) {
+    let entries;
+    try {
+      entries = JSON.parse(raw);
+    } catch (err) {
+      return showError('ה-JSON לא תקין: ' + err.message);
+    }
+    if (!Array.isArray(entries) || !entries.length) return showError('ה-JSON צריך להיות מערך של שירים');
+    return importFromJson(entries);
+  }
+
+  const urls = raw.split('\n').map((u) => u.trim()).filter(Boolean);
+  importFromUrls(urls);
 });
   </script>
 </body>
