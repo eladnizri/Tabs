@@ -33,6 +33,9 @@
         <a href="index.html" class="nav-link">
           <span class="icon" data-icon="plus"></span>הוספה
         </a>
+        <a href="import.html" class="nav-link active" aria-current="page">
+          <span class="icon" data-icon="clipboard"></span>ייצוא
+        </a>
         <a href="my-tabs.html" class="nav-link">
           <span class="icon" data-icon="library"></span>הטאבים שלי
           <span class="nav-count" data-nav-count hidden></span>
@@ -44,21 +47,13 @@
   <main class="container import-container">
     <div class="page-header">
       <h1>ייצוא קישורים בעלויות</h1>
-      <p>הדבק קישורים (אחד בכל שורה) או בחר בעדכון אוטומטי מ-Negina</p>
+      <p>הדבק כמה קישורים שתרצה (אחד בכל שורה) ונוסיף את כולם בבת אחת.</p>
     </div>
 
     <form id="import-form" class="card form-card" novalidate>
       <div class="field">
         <label for="urls-input">קישורים</label>
         <textarea id="urls-input" placeholder="https://negina.co.il/chords/...&#10;https://negina.co.il/chords/..." spellcheck="false"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="source-select">מקור</label>
-        <select id="source-select" class="select">
-          <option value="manual">הדבק ידנית</option>
-          <option value="negina">עדכון מ-Negina (ניסיוני)</option>
-        </select>
       </div>
 
       <div id="status-area" hidden>
@@ -80,49 +75,10 @@
   <script>
 const form = document.getElementById('import-form');
 const urlsInput = document.getElementById('urls-input');
-const sourceSelect = document.getElementById('source-select');
 const statusArea = document.getElementById('status-area');
 const statusList = document.getElementById('status-list');
 const progressFill = document.getElementById('progress-fill');
 const importError = document.getElementById('import-error');
-
-sourceSelect.addEventListener('change', async () => {
-  if (sourceSelect.value === 'negina') {
-    importError.hidden = true;
-    urlsInput.disabled = true;
-    urlsInput.value = 'טוען קישורים מ-Negina...';
-
-    try {
-      const urls = await fetchNegina();
-      urlsInput.value = urls.join('\n');
-      urlsInput.disabled = false;
-      sourceSelect.value = 'manual';
-    } catch (e) {
-      urlsInput.value = '';
-      urlsInput.disabled = false;
-      sourceSelect.value = 'manual';
-      showError('שגיאה בטעינה מ-Negina: ' + e.message);
-    }
-  }
-});
-
-async function fetchNegina() {
-  const response = await fetch('https://negina.co.il/chords');
-  const html = await response.text();
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-
-  const urls = new Set();
-  doc.querySelectorAll('a[href*="/chords/"]').forEach(link => {
-    const href = link.getAttribute('href');
-    if (href && !href.includes('?')) {
-      const url = 'https://negina.co.il' + href;
-      urls.add(url);
-    }
-  });
-
-  return Array.from(urls);
-}
 
 function showError(msg) {
   importError.textContent = msg;
@@ -133,91 +89,84 @@ function clearError() {
   importError.hidden = true;
 }
 
-form.addEventListener('submit', async (e) => {
+function statusRow(iconText, text) {
+  return h('div', { class: 'status-item' }, h('span', { class: 'status-icon' }, iconText), h('span', {}, text));
+}
+
+form.addEventListener('submit', (e) => {
   e.preventDefault();
   clearError();
 
   const urls = urlsInput.value
     .split('\n')
-    .map(u => u.trim())
+    .map((u) => u.trim())
     .filter(Boolean);
 
   if (!urls.length) return showError('הדבק לפחות קישור אחד');
 
   statusArea.hidden = false;
-  statusList.innerHTML = '';
+  statusList.replaceChildren();
   progressFill.style.width = '0%';
 
   const tabs = loadTabs();
   let added = 0, duplicates = 0, invalid = 0;
 
-  for (let i = 0; i < urls.length; i++) {
-    const url = urls[i];
-    const progress = ((i + 1) / urls.length * 100);
-    progressFill.style.width = progress + '%';
+  urls.forEach((url, i) => {
+    progressFill.style.width = ((i + 1) / urls.length * 100) + '%';
 
-    const item = document.createElement('div');
-    item.className = 'status-item';
-
-    try {
-      const link = canonicalUrl(normalizeUrl(url));
-      if (!link) {
-        item.innerHTML = '<span class="status-icon">✗</span><span>קישור לא תקין</span>';
-        statusList.appendChild(item);
-        invalid++;
-        continue;
-      }
-
-      if (tabs.some(t => canonicalUrl(t.link) === link)) {
-        item.innerHTML = '<span class="status-icon">⊙</span><span>כבר קיים</span>';
-        statusList.appendChild(item);
-        duplicates++;
-        continue;
-      }
-
-      const detected = autoDetect(url);
-      if (detected && detected.song && detected.artist) {
-        tabs.unshift({
-          id: newId(),
-          song: detected.song,
-          artist: detected.artist,
-          link: url,
-          source: sourceLabel(url),
-          addedAt: new Date().toISOString()
-        });
-        item.innerHTML = `<span class="status-icon">✓</span><span>${detected.song} · ${detected.artist}</span>`;
-        statusList.appendChild(item);
-        added++;
-      } else {
-        item.innerHTML = '<span class="status-icon">?</span><span>לא זוהה (צריך ידנית)</span>';
-        statusList.appendChild(item);
-      }
-    } catch (err) {
-      item.innerHTML = '<span class="status-icon">✗</span><span>שגיאה</span>';
-      statusList.appendChild(item);
+    const link = canonicalUrl(normalizeUrl(url));
+    if (!link) {
+      statusList.append(statusRow('✗', 'קישור לא תקין'));
       invalid++;
+      return;
     }
-  }
+
+    if (tabs.some((t) => canonicalUrl(t.link) === link)) {
+      statusList.append(statusRow('⊙', 'כבר קיים'));
+      duplicates++;
+      return;
+    }
+
+    const detected = autoDetect(link);
+    if (detected && detected.song && detected.artist) {
+      tabs.unshift({
+        id: newId(),
+        song: detected.song,
+        artist: detected.artist,
+        link,
+        source: sourceLabel(link),
+        addedAt: new Date().toISOString(),
+      });
+      statusList.append(statusRow('✓', `${detected.song} · ${detected.artist}`));
+      added++;
+    } else {
+      statusList.append(statusRow('?', 'לא זוהה אוטומטית (הוסף ידנית בדף ההוספה)'));
+    }
+  });
 
   if (added > 0) {
     saveTabs(tabs);
-    const summary = document.createElement('div');
-    summary.className = 'import-stats';
-    summary.innerHTML = `
-      <strong>הסיכום:</strong><br>
-      ✓ נוספו: ${added}<br>
-      ⊙ כבר קיימים: ${duplicates}<br>
-      ✗ שגיאות: ${invalid}
-    `;
-    statusList.appendChild(summary);
+    statusList.append(
+      h(
+        'div',
+        { class: 'import-stats' },
+        h('strong', {}, 'הסיכום:'),
+        h('br'),
+        `✓ נוספו: ${added}`,
+        h('br'),
+        `⊙ כבר קיימים: ${duplicates}`,
+        h('br'),
+        `✗ לא זוהו/לא תקינים: ${invalid}`
+      )
+    );
 
-    showToast(`הוסף ${added} טאבים בהצלחה`, {
+    showToast(`נוספו ${added} טאבים בהצלחה`, {
       type: 'success',
       actionLabel: 'לספרייה',
-      onAction: () => (location.href = 'my-tabs.html')
+      onAction: () => (location.href = 'my-tabs.html'),
     });
   } else {
-    showError('לא הוספו טאבים');
+    showError('לא נוסף אף טאב חדש (כולם כבר קיימים, לא תקינים, או לא זוהו).');
   }
 });
   </script>
