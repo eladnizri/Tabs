@@ -106,9 +106,17 @@ songInput.addEventListener("input", () => {
   songInput.classList.remove("invalid");
   updatePreview();
 });
+songInput.addEventListener("blur", () => {
+  if (songInput.value.trim() || !linkInput.value.trim()) return;
+  songInput.classList.add("invalid");
+});
 artistInput.addEventListener("input", () => {
   artistInput.classList.remove("invalid");
   updatePreview();
+});
+artistInput.addEventListener("blur", () => {
+  if (artistInput.value.trim() || !linkInput.value.trim()) return;
+  artistInput.classList.add("invalid");
 });
 
 if (navigator.clipboard && navigator.clipboard.readText) {
@@ -133,6 +141,8 @@ if (navigator.clipboard && navigator.clipboard.readText) {
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
+  const submitBtn = form.querySelector("[type=submit]");
+  if (submitBtn.disabled) return;
   clearError();
 
   const rawLink = normalizeUrl(linkInput.value);
@@ -149,6 +159,7 @@ form.addEventListener("submit", (e) => {
   const dup = findDuplicate(link);
   if (dup) return showError(`הקישור הזה כבר שמור בספרייה (${dup.song} · ${dup.artist}).`, linkInput);
 
+  submitBtn.disabled = true;
   tabs.unshift({ id: newId(), song, artist, link, source: sourceLabel(link), addedAt: new Date().toISOString() });
   saveTabs(tabs);
 
@@ -157,6 +168,7 @@ form.addEventListener("submit", (e) => {
   setStatus(null);
   updatePreview();
   renderRecent();
+  submitBtn.disabled = false;
   linkInput.focus();
 
   showToast(`"${song}" נוסף לספרייה`, {
