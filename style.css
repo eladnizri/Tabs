@@ -287,6 +287,11 @@ select {
   background: var(--accent-hover);
 }
 
+.btn-primary:disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .btn-ghost {
   background: var(--surface);
   border-color: var(--border-strong);
@@ -311,8 +316,8 @@ select {
 .icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 10px;
   border: none;
   background: transparent;
@@ -664,7 +669,7 @@ a.tab-song:hover {
   flex-shrink: 0;
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .tab-actions {
     opacity: 0.45;
     transition: opacity 0.15s;
@@ -866,8 +871,8 @@ mark {
 .chip-close {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 999px;
   background: transparent;
@@ -1057,6 +1062,44 @@ mark {
 
 /* ---------- Responsive ---------- */
 
+/* ---------- Bottom tab bar (mobile) ---------- */
+
+@media (max-width: 600px) {
+  .topbar .nav-links {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    justify-content: center;
+    gap: 8px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(12px);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    border: none;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    padding: 6px 16px calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .topbar .nav-link {
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 20px;
+    font-size: 0.8rem;
+    border-radius: 12px;
+  }
+
+  .topbar .nav-link .icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .container {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+}
+
 @media (max-width: 600px) {
   .page-header {
     margin: 24px 0 18px;
@@ -1112,8 +1155,8 @@ mark {
   }
 
   .tab-actions .icon-btn {
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
   }
 }
 

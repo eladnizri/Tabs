@@ -205,19 +205,6 @@ function tabCard(tab, opts = {}) {
             { class: "icon-btn", href, target: "_blank", rel: "noopener noreferrer", title: "פתיחת הטאב", "aria-label": `פתיחת ${tab.song}` },
             icon("external")
           ),
-        onToggleFavorite &&
-          h(
-            "button",
-            {
-              type: "button",
-              class: `icon-btn favorite-btn${tab.favorite ? " active" : ""}`,
-              title: tab.favorite ? "הסרה ממועדפים" : "הוספה למועדפים",
-              "aria-label": tab.favorite ? `הסרת ${tab.song} ממועדפים` : `הוספת ${tab.song} למועדפים`,
-              "aria-pressed": String(!!tab.favorite),
-              onclick: onToggleFavorite,
-            },
-            icon("star")
-          ),
         onEdit &&
           h("button", { type: "button", class: "icon-btn", title: "עריכה", "aria-label": `עריכת ${tab.song}`, onclick: onEdit }, icon("edit")),
         onDelete &&
